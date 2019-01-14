@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>MagicBoot - Client</title>
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/app.css" />
+    <link rel="stylesheet" href="../assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="../assets/css/all.min.css" />
+
+    <script>
+
+        const { ipcRenderer, ipcMain, remote } = require('electron');
+        //const argv = require('optimist').argv;
+        //console.log(remote.process.env);
+
+        window.interval = null;
+        window.countdown = 10;
+
+
+        /**
+         * Abort autostart
+         */
+        window.abort = function () {
+
+            console.log("Countdown aborted!");
+
+            if (window.interval) {
+                clearInterval(window.interval);
+            }
+
+            // update title
+            let title = document.querySelector("#status-title");
+            title.innerHTML = "<i>Kein Job aktiv</i>";
+
+            // display abort button
+            let abort = document.querySelector("#abort-button");
+            abort.style.display = "block";
+            abort.style.visibility = "hidden";
+
+        }
+
+
+        /**
+         * Start action
+         */
+        window.do = function (action) {
+
+            // feedback
+            console.log("window.do() callecd", action);
+
+            // abort autostart
+            // start action from button
+
+            ipcRenderer.send('action', action);
+
+            // @TODO
+            // abort befor ipc.send....
+            window.abort();
+
+        }
+
+
+        // listen for progress
+        // update progressbar & title 
+        ipcRenderer.on("progress", (event, data) => {
+
+            console.log("Progress", data);
+
+            // set progress title
+            let title = document.querySelector("#status-title");
+            title.innerHTML = data.title;
+
+            // progress-bar
+            let progress = document.querySelector("#status-progress");
+            progress.style.width = data.precent + "%";
+
+        });
+
+
+        // listen for autostart
+        // start countdown
+        ipcRenderer.on("autostart", (event, action) => {
+
+            console.log("Autostart in render");
+
+
+            // select title status & abort button
+            let title = document.querySelector("#status-title");
+            let abort = document.querySelector("#abort-button");
+
+
+            /**
+             * - Set title
+             * - Display abort button 
+             */
+            (function () {
+
+                if (action === "tasks") {
+                    title.innerHTML = "Proceed tasks in " + window.countdown + "s";
+                } else if (action === "install") {
+                    title.innerHTML = "Windows Installation in " + window.countdown + "s";
+                }
+
+                // display abort button
+                abort.style.display = "block";
+                abort.style.visibility = "visible";
+
+            })();
+
+
+            // automatic windows installation
+            window.interval = setInterval(function () {
+
+                // countdown
+                window.countdown--;
+
+
+                if (action === "tasks") {
+                    title.innerHTML = "Proceed tasks in " + window.countdown + "s";
+                } else if (action === "install") {
+                    title.innerHTML = "Windows Installation in " + window.countdown + "s";
+                }
+
+
+                if (window.countdown === 0) {
+
+                    console.log("DO %s after timeout", action);
+
+                    // hide button after countdown
+                    abort.style.display = "none";
+                    abort.style.visibility = "hidden";
+
+                    // clean up
+                    clearInterval(window.interval);
+
+                    // pass some time
+                    // proceed action 
+                    setTimeout(function () {
+                        window.do(action);
+                    }, 1000);
+
+                }
+
+
+            }, 1000);
+
+        });
+
+
+    </script>
+
+</head>
+
+<body>
+
+    <section>
+        <div class="container-fluid p-4">
+            <div class="row">
+
+                <div class="col-sm-4">
+                    <div class="card" onClick="window.do('install')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fab fa-windows text-info"></i>
+                                <h5 class="card-title pt-3 mb-0">Windows Installieren</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 hide">
+                    <div class="card" onClick="window.do('capture')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-copy text-danger"></i>
+                                <h5 class="card-title pt-3 mb-0">Image erstellen</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <div class="card" onClick="window.do('register')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-plus-circle text-warning"></i>
+                                <h5 class="card-title pt-3 mb-0">Computer Registrieren</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <div class="card" onClick="window.do('tasks')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-tasks text-primary"></i>
+                                <h5 class="card-title pt-3 mb-0">Task ausführen</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 mt-4">
+                    <div class="card" onClick="window.do('terminal')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-terminal text-dark"></i>
+                                <h5 class="card-title pt-3 mb-0">Terminal öffnen</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 mt-4">
+                    <div class="card" onClick="window.do('hardware')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-memory text-success"></i>
+                                <h5 class="card-title pt-3 mb-0">Hardware Information</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="row">
+
+                <div class="col-sm-4 mt-4">
+                    <div class="card" onClick="window.do('reboot')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-undo text-muted"></i>
+                                <h5 class="card-title pt-3 mb-0">Neustarten</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 mt-4">
+                    <div class="card" onClick="window.do('shutdown')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-power-off text-muted"></i>
+                                <h5 class="card-title pt-3 mb-0">Herunterfahren</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 mt-4">
+                    <div class="card" onClick="window.do('exit')">
+                        <div class="card-body text-center">
+
+                            <div class="inner">
+                                <i class="fas fa-sign-out-alt text-muted"></i>
+                                <h5 class="card-title pt-3 mb-0">Beenden</h5>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container-fluid p-3">
+
+            <h6 id="status-title"><i>Kein Job aktiv</i></h6>
+            <div class="progress" style="height: 3px;">
+                <div id="status-progress" class="progress-bar" role="progressbar" aria-valuenow="25" aria-valuemin="0"
+                    aria-valuemax="100"></div>
+            </div>
+
+            <div id="abort-button" class="mt-3" style="display: none; visibility: hidden;">
+                <button type="button" class="btn btn-outline-primary" onClick="window.abort()">
+                    Abbrechen
+                </button>
+            </div>
+
+        </div>
+    </footer>
+
+    <!--
+
+
+    <h1>Hello World!</h1>
+    <!-- All of the Node.js APIs are available in this renderer process. --
+    We are using Node.js
+    <script>document.write(process.versions.node)</script>,
+    Chromium
+    <script>document.write(process.versions.chrome)</script>,
+    and Electron
+    <script>document.write(process.versions.electron)</script>.
+
+    <script>
+        // You can also require other files to run in this process
+        //require('./renderer.js')
+    </script>
+    -->
+
+</body>
+
+</html>

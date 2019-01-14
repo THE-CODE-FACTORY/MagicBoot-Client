@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>MagicBoot - Client (Hardware)</title>
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/app.css" />
+    <link rel="stylesheet" href="../assets/css/fontawesome.min.css" />
+    <link rel="stylesheet" href="../assets/css/all.min.css" />
+
+    <script>
+
+        const { ipcRenderer } = require('electron');
+
+        ipcRenderer.on("hardware", (event, data) => {
+
+            console.log("Hardware", data);
+
+
+        });
+
+    </script>
+
+</head>
+
+<body>
+
+    ToDo...
+
+</body>
+
+</html>
