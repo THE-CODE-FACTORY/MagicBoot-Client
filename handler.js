@@ -1,17 +1,99 @@
-const si = require("systeminformation");
-const child = require("child_process");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const util = require("util");
+const si = require("systeminformation");
+const child = require("child_process");
 const { BrowserWindow } = require('electron');
+const argv = require('minimist')(process.argv);
 
 
 
-module.exports = function (socket, parent, argv) {
+module.exports = function (socket, parent) {
 
-    var computer, config = null;
+    //var title = "KEIN----";
+    var computer, config;
     var actions = {};
+
+
+    const countdown = function (cb) {
+
+        var counter = 10;
+
+        setInterval(function () {
+
+            counter--;
+
+            parent.webContents.send("progress", {
+                title: `Autostart in ${counter}s`,
+                precent: 0
+            });
+
+            if (counter === 0) {
+
+                clearInterval(this);
+                cb();
+
+            }
+
+        }, 1000);
+
+    };
+
+
+    const autostart = function autostart() {
+        switch (computer.state) {
+            case "loaded":
+
+                // proceed windows installation
+                console.log("Autostart: install");
+                actions.install();
+
+                break;
+            case "cloned":
+
+                // proceed post-install tasks
+                console.log("Autostart: tasks");
+                actions.tasks();
+
+                break;
+            default:
+
+                // autostart default
+                console.log("Autostart: default action,", computer.state);
+
+                break;
+
+        }
+    };
+
+
+    //socket.on("autostart", () => {
+    setTimeout(() => {
+        if (argv.autostart && computer) {
+
+            // feedback
+            console.log("Countdown start");
+
+            // start countdown
+            countdown(() => {
+
+                console.log("Countdown end");
+                autostart();
+
+            });
+
+        } else {
+
+            console.log("AUTOSTART FEHLER:");
+            console.log("Enabled: ", argv.autostart);
+            console.log("Computer: ", computer);
+
+        }
+    }, 1000);
+    //});
+
+
 
     const helper = require("./helper.js")(computer, config);
 
@@ -83,6 +165,9 @@ module.exports = function (socket, parent, argv) {
     };
 
 
+    /**
+     * Open Terminal (cmd.exe)
+     */
     actions.terminal = function () {
 
         const terminal = child.spawn("cmd.exe", {
@@ -164,7 +249,6 @@ module.exports = function (socket, parent, argv) {
 
 
     };
-
 
 
     /**
@@ -390,7 +474,6 @@ module.exports = function (socket, parent, argv) {
     };
 
 
-
     /**
      * Captrue windows image
      */
@@ -567,7 +650,6 @@ module.exports = function (socket, parent, argv) {
     };
 
 
-
     /**
      * Shutdown the computer
      */
@@ -593,7 +675,6 @@ module.exports = function (socket, parent, argv) {
 
         });
     };
-
 
 
     /**
