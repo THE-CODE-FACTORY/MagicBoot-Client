@@ -2,6 +2,7 @@ const dgram = require("dgram");
 const io = require("socket.io-client");
 const { app, ipcMain } = require("electron");
 const argv = require('minimist')(process.argv);
+const { execSync } = require("child_process");
 
 module.exports = function (win) {
 
@@ -32,11 +33,14 @@ module.exports = function (win) {
                 const m = JSON.parse(message);
                 console.log(m, message.toString())
 
+                const conURI = `${m["http"].protocol}://${m["http"].host}:${m["http"].port}/client`;
+                console.log("Connection URL:", conURI);
+
 
                 // connect to server
                 // broadcasted from autodiscover
-                socket = io(`${m["http"].protocol}://${m["http"].host}:${m["http"].port}/client`, {
-                    transports: ["websocket"]
+                socket = io(conURI, {
+                    //transports: ["websocket"]
                 });
 
 
@@ -128,6 +132,41 @@ module.exports = function (win) {
     });
 
 
-    client.bind(PORT);
+    if (argv.peinit) {
+        try {
+
+            // feedback
+            console.log("running windows pe init scripts...");
+
+            // change overlay
+            // display pe init screen
+            win.webContents.send("pe.init");
+
+            // exec commands from startnet.cmd here
+            // so we can start our app in fullscreen
+            execSync("Wpeinit");
+            execSync("Wpeutil InitializeNetwork");
+            execSync("Wpeutil DisableFirewall");
+            execSync("powercfg /s 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c");
+
+            // change overlay
+            // hide pe init screen
+            win.webContents.send("pe.done");
+
+            // bind autodiscover
+            client.bind(PORT);
+
+        } catch (err) {
+
+            // feedback
+            console.log("COULD NOT INIT WINDOWSPE SETTINGS!", err);
+
+        }
+    } else {
+
+        // bind autodiscover
+        client.bind(PORT);
+
+    }
 
 };

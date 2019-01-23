@@ -9,11 +9,13 @@ const autodiscover = require("./autodiscover.js");
 var win;
 
 console.log("Main app, %d", process.pid, argv);
+console.log("Frameless: ", Boolean(argv.frameless ? false : true));
 
 function createWindow() {
 
     win = new BrowserWindow({
-        show: false
+        show: false,
+        frame: argv.frameless ? false : true
     });
 
 
@@ -21,8 +23,17 @@ function createWindow() {
 
         console.log("Show main window");
 
-        win.maximize();
-        win.show();
+        if (argv.fullscreen) {
+
+            // fullscreen
+            win.setFullScreen(true);
+
+        } else {
+
+            // maximize
+            win.maximize();
+
+        }
 
     });
 

@@ -1,0 +1,2 @@
+autodiscover interval = 1000ms -> overlay stay, connect event wird wird im renderer nicht erkannt
+"all-windows-closed" event -> app exit!
